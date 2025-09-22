@@ -1,37 +1,24 @@
 import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
+import { IClient, Schema } from "./data";
 
-const client = generateClient<Schema>();
-
-function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
+function App(props: {client: IClient}) {
+  const [tenant, setTenant] = useState<Schema["Tenant"]["type"] | undefined>(undefined)
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
+    const f = async () => {
+      // const tenants = await client.models.Tenant.list()
+      const res = await props.client.getTenant({
+        id: ""
+      })
+      setTenant(res.data!)
+    }
+    f()
   }, []);
-
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
 
   return (
     <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
+      <h1>My Tenants</h1>
       <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
+        {tenant?.name}
       </div>
     </main>
   );
