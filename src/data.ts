@@ -73,10 +73,6 @@ export const dummyRepository = new Repository({
     data: {
       id: args[0].id,
       name: "test-name",
-      // createdAt: new Date().toString(),
-      // updatedAt: new Date().toString(),
-      // status: "active",
-      // users: async () => ({ data: [] }),
-    },
+    
   }),
 })
