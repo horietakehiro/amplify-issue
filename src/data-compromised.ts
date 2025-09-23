@@ -4,29 +4,21 @@ import type {
   ListReturnValue,
   SingularReturnValue,
 } from "@aws-amplify/data-schema/runtime";
-/**
- * Compromised custom SingularFn
- * **must exclude `selectionSet` option because it may caus some tsc errors and take very heavy load on tsc in some(complex) data models**
- */
 type SingularFn<
   Fn extends (props: any, options?: { selectionSet?: any }) => any,
   Type,
   Props = Parameters<Fn>[0],
-  Options = Parameters<Fn>[1],
+  Options = Parameters<Fn>[1]
 > = (
   props: Props,
   options?: Options extends undefined
     ? undefined
-    : Omit<Options, "selectionSet"> //& { selectionSet?: readonly never[] }
+    : Omit<Options, "selectionSet">
 ) => SingularReturnValue<Type>;
-/**
- * Compromised LitFn
- * **must exclude `selectionSet` option because it may caus some tsc errors and take very heavy load on tsc in some(complex) data models**
- */
 type ListFn<
   Fn extends (options?: { selectionSet?: any }) => any,
   Type,
-  Options = Parameters<Fn>[0],
+  Options = Parameters<Fn>[0]
 > = (
   options?: Options extends undefined
     ? undefined
@@ -37,13 +29,13 @@ const schema = a
   .schema({
     Tenant: a.model({
       name: a.string().required(),
-      users: a.hasMany("User", "TenantId")
+      users: a.hasMany("User", "TenantId"),
     }),
     User: a.model({
       name: a.string(),
       tenantId: a.id().required(),
-      tenant: a.belongsTo("Tenant", "tenantId")
-    })
+      tenant: a.belongsTo("Tenant", "tenantId"),
+    }),
   })
   .authorization((allow) => allow.publicApiKey());
 
@@ -51,8 +43,14 @@ export type Schema = ClientSchema<typeof schema>;
 type Client = ReturnType<typeof generateClient<Schema>>;
 // define an interface of amplify data client
 export interface IClient {
-  getTenant: SingularFn<Client["models"]["Tenant"]["get"], Schema["Tenant"]["type"]>;
-  listTenants: ListFn<Client["models"]["Tenant"]["list"], Schema["Tenant"]["type"]>
+  getTenant: SingularFn<
+    Client["models"]["Tenant"]["get"],
+    Schema["Tenant"]["type"]
+  >;
+  listTenants: ListFn<
+    Client["models"]["Tenant"]["list"],
+    Schema["Tenant"]["type"]
+  >;
 }
 export class Repository {
   client: IClient;
@@ -74,23 +72,26 @@ const client = generateClient<Schema>();
 export const productionRepository = new Repository({
   getTenant: client.models.Tenant.get,
   listTenants: client.models.Tenant.list,
-})
+});
 /**
  * this no longer cause errors (pass tsc)
  */
 export const dummyRepository = new Repository({
   listTenants: async (...args) => ({
-    data: []
+    data: [],
   }),
   getTenant: async (...args) => ({
     data: {
       id: args[0].id,
       name: "test-name",
-      createdAt: "", updatedAt: "",
-      users: () => {throw Error()}
-    }
-  })
-})
+      createdAt: "",
+      updatedAt: "",
+      users: () => {
+        throw Error();
+      },
+    },
+  }),
+});
 
-const res = await dummyRepository.getTenant("")
-res.name
+const res = await dummyRepository.getTenant("");
+res.name;
